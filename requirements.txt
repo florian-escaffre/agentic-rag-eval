@@ -1,0 +1,17 @@
+# RAG & agents
+langchain
+langchain-ollama
+langchain-chroma
+langchain-text-splitters
+langgraph
+chromadb
+
+# Data & Evaluation
+datasets
+pandas
+numpy
+tqdm
+
+# Config & notebooks
+python-dotenv
+ipykernel
