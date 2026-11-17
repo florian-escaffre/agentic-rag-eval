@@ -99,7 +99,7 @@ Comparing the last two shows where errors come from: bad retrieval or bad use of
 - [x] Indexing with Chroma and Ollama embeddings
 - [x] Simple RAG pipeline (LangChain building blocks)
 - [x] Evaluation script
-- [ ] Baseline results
+- [x] Baseline results
 - [ ] LangGraph agent: query rewriting, relevance grading, retry loop
 - [ ] Comparison simple RAG vs agent (quality, latency, number of LLM calls)
 - [ ] Possibly a multi-agent version, only if the single agent shows a clear limit
