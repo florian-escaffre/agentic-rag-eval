@@ -1,16 +1,15 @@
-# rag-agents
+# rag-evaluation
 
-A personal learning project to get hands-on with **Retrieval-Augmented Generation (RAG)**, **agentic AI** and how to **evaluate** them, using **LangChain** and **LangGraph** with small local models served by **Ollama**.
+A personal learning project to get hands-on with **Retrieval-Augmented Generation (RAG)** and, above all, with how to **evaluate** it, using **LangChain** with small local models served by **Ollama**.
 
-This is not a production system. The goal is to understand each building block by implementing it, measuring it, and comparing a simple RAG pipeline with an agentic version of it.
+This is not a production system. The goal is to understand each building block by implementing it, measuring it, and knowing where the errors come from: bad retrieval or bad use of good passages.
 
 ## Goals
 
 - Understand the RAG principle: embeddings, vector search, prompting with retrieved context.
 - Learn how to evaluate a RAG system, separating retrieval errors from generation errors.
-- Use LangChain for the building blocks and LangGraph to orchestrate an agentic workflow.
+- Go beyond string metrics: add an LLM-as-judge, and validate the judge itself on a manually labelled sample.
 - Run everything locally on a small GPU with small models (about 3B parameters).
-- Measure whether the agentic version actually improves on the simple pipeline, rather than assume it does.
 
 ## How it works
 
@@ -23,8 +22,8 @@ passages -> embeddings -> Chroma    question -> embedding -> top-k passages -> L
 
 1. **Indexing:** every passage of the corpus is turned into a vector by an embedding model and stored in a Chroma vector database.
 2. **Retrieval:** the question is embedded with the same model, and the k closest passages are fetched.
-3. **Generation:** the passages and the question are put in a prompt, and a local LLM answers using only that context.
-4. **Evaluation:** a fixed sample of questions is run through the system, and answers and retrieved passages are scored.
+3. **Generation:** the passages and the question are put in a prompt, and a local LLM answers using only that context (temperature=0, for reproducible evaluation).
+4. **Evaluation:** a fixed random sample of questions is run through the system, and answers and retrieved passages are scored.
 
 ## Dataset
 
@@ -42,16 +41,16 @@ Served locally by Ollama and set in `config.py`:
 | Role | Model |
 |---|---|
 | Embeddings | `nomic-embed-text` |
-| Generation | a ~3B model (e.g. `llama3.2:3b` or `ministral-3:3b`) |
+| Generation | a ~3B model (e.g. `ministral-3:3b`) |
 
 ## Project structure
 
 ```
-rag-agents/
+rag-evaluation/
 ├── config.py          # models, paths and parameters in one place
 ├── requirements.txt
-├── src/               # pipeline code (see src/README.md)
-├── eval/              # evaluation code and results (see eval/README.md)
+├── src/               # RAG pipeline: indexing, retrieval, generation (see src/README.md)
+├── eval/              # evaluation code, experiment scripts and results (see eval/README.md)
 └── db/                # Chroma index, generated locally (see db/README.md)
 ```
 
@@ -65,7 +64,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 ollama pull nomic-embed-text
-ollama pull llama3.2:3b        # or the model set in config.py
+ollama pull ministral-3:3b        # or the model set in config.py
 ```
 
 ## Usage
@@ -82,44 +81,58 @@ python src/rag_chain.py
 
 # 4. Evaluate on a sample of questions
 python eval/run_eval.py --name rag_baseline --n 50
+
+# 5. Analyze the results (notebook, to be added)
 ```
 
-## Evaluation approach
+## Evaluation methodology
 
-Questions are scored in two groups:
+Each experiment runs a fixed random sample of questions (same seed, so experiments are comparable) and saves full per-question results as JSON in `eval/results/`.
+
+Current metrics, in two groups:
 
 - **Yes/no questions:** accuracy on the first word of the answer.
 - **Open questions:** exact match, token-level F1, whether the gold answer appears in the generated answer, and whether it appears in the retrieved passages.
 
 Comparing the last two shows where errors come from: bad retrieval or bad use of good passages. Details and limits are in [`eval/README.md`](eval/README.md).
 
-## Roadmap
+Planned next steps:
+
+- **Hyperparameter study:** vary retrieval parameters (e.g. `k`) and compare runs on the same seed.
+- **LLM-as-judge:** score generated answers with a local LLM instead of string comparison, better suited to rephrased or verbose answers.
+- **Judge validation:** check the judge against manual labels on a small sample before trusting its scores, since a judge evaluated with strings alone is just another lossy metric.
+
+## Status
 
 - [x] Dataset exploration
 - [x] Indexing with Chroma and Ollama embeddings
 - [x] Simple RAG pipeline (LangChain building blocks)
-- [x] Evaluation script
-- [x] Baseline results
-- [ ] LangGraph agent: query rewriting, relevance grading, retry loop
-- [ ] Comparison simple RAG vs agent (quality, latency, number of LLM calls)
-- [ ] Possibly a multi-agent version, only if the single agent shows a clear limit
+- [x] Evaluation script with string-based metrics
+- [x] Baseline run (results not yet written up here)
+- [ ] Hyperparameter study
+- [ ] LLM-as-judge and manual validation of the judge
+- [ ] Analysis notebook
+- [ ] Written-up results
 
 ## Results
 
-To be filled in once the evaluation has been run.
+To be filled in once each experiment has been run and reviewed.
 
 | System | Yes/no acc. | Open F1 | Answer in retrieved | Mean latency |
 |---|---|---|---|---|
-| Simple RAG | TBD | TBD | TBD | TBD |
-| LangGraph agent | TBD | TBD | TBD | TBD |
+| Baseline | TBD | TBD | TBD | TBD |
 
 ## Limitations
 
-- Small models (about 3B) follow instructions less reliably than large ones, especially in agent loops.
+- Small models (about 3B) follow instructions less reliably than large ones.
 - Retrieval quality is estimated through a proxy, not measured against labelled passages.
 - String-based metrics measure surface similarity, not meaning: a correct but rephrased answer can be scored low.
 - Small evaluation samples give noisy numbers; avoid reading much into small differences.
 
+## Future directions
+
+An agentic version of this pipeline (LangGraph: query rewriting, relevance grading, retry loop) and the evaluation of an agent will be explored in a separate project, with its own dataset. This repository stays focused on single-shot RAG and its evaluation.
+
 ## Tech stack
 
-Python, LangChain, LangGraph, Chroma, Ollama, Hugging Face `datasets`.
+Python, LangChain, Chroma, Ollama, Hugging Face `datasets`.

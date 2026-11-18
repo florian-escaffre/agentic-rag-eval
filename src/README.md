@@ -8,7 +8,6 @@ Pipeline code: indexing, retrieval and answer generation. Shared settings are in
 | `ingest.py` | Builds the vector index (see below). |
 | `retriever.py` | Opens the index and returns the passages closest to a question. |
 | `rag_chain.py` | Simple RAG: retrieval, prompt, generation. |
-| `agent_graph.py` | Reserved for the LangGraph agent (not implemented yet). |
 
 ## `ingest.py`
 

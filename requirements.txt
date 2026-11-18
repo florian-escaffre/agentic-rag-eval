@@ -1,9 +1,8 @@
-# RAG & agents
+# RAG pipeline
 langchain
 langchain-ollama
 langchain-chroma
 langchain-text-splitters
-langgraph
 chromadb
 
 # Data & Evaluation
